@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace = "com.room.member.mapper.memberMapper">
+<!-- 로그인 -->
+
+
+<select resultType="com.room.member.dto.MemberDTO" parameterType="com.room.member.dto.MemberDTO" id="login">
+SELECT m_id, m_pwd, m_name ,m_power
+FROM member
+WHERE m_id = #{m_id}
+AND m_pwd = #{m_pwd} 
+</select>
+<!-- 회원 아이디 중복 검사 -->
+
+
+<select resultType="int" id="idCheck">
+SELECT count(*)
+FROM member
+WHERE m_id = #{m_id} 
+</select>
+<!-- 회원 이메일 중복 검사 -->
+<select resultType="int" id="eCheck">
+SELECT count(*)
+FROM member
+WHERE m_email = #{m_email}
+</select>
+<!-- 회원 가입 -->
+
+
+<insert parameterType="com.room.member.dto.MemberDTO" id="insert">
+INSERT INTO member(m_bno,m_id, m_pwd, m_name, m_tel, m_email, m_address, m_birth)
+VALUES (#{m_bno},#{m_id}, #{m_pwd}, #{m_name}, #{m_tel}, #{m_email}, #{m_address}, #{m_birth}) 
+</insert>
+<!-- 해당하는 회원id의 비밀번호, 이름, 번화번호, 주소를 변경한다. -->
+
+
+<update parameterType="com.room.member.dto.MemberDTO" id="update">
+UPDATE member
+SET m_pwd = #{m_pwd},m_name = #{m_name},m_tel = #{m_tel},m_address = #{m_address} 
+WHERE m_id = #{m_id} 
+</update>
+
+<!-- 회원 아이디에 해당하는 정보를 삭제한다. -->
+
+
+<delete parameterType="String" id="delete">
+DELETE FROM member
+WHERE m_id = #{m_id} 
+</delete>
+ <select id="view" parameterType="String" resultType="com.room.member.dto.MemberDTO">
+		SELECT * FROM member WHERE m_id = #{m_id}
+</select>
+<!-- 아이디 찾기 -->
+
+ 	
+<select resultType="String" parameterType="String" id="findidform">
+select m_id 
+from member 
+where m_email = #{m_email} 
+</select>
+
+<!-- 비밀번호 찾기 -->
+
+
+<select resultType="String" id="memberfindpwform">
+select m_pwd 
+from member 
+where m_id=#{m_id} 
+and m_email = #{m_email} 
+</select>
+
+   <!-- 공지사항 검색조건 -->
+   <sql id="noticeSearch">
+      <if test="searchType != null">
+         <if test="searchType == 'title'.toString()">AND notice_title LIKE CONCAT('%',#{keyword},'%')</if>
+         <if test="searchType == 'content'.toString()">AND notice_content  LIKE CONCAT('%',#{keyword},'%')</if>
+      </if>
+   </sql>
+
+   <!-- 공지사항 목록 보기 (Paging 처리) + 검색조건 -->
+   <select id="noticePaging" parameterType="com.room.admin.dto.SearchCriteria" resultType="com.room.admin.dto.BoardDTO">
+    <![CDATA[
+        SELECT   *  
+        FROM   notice_board 
+        WHERE   1=1
+    ]]>
+      <include refid="noticeSearch"/>
+    <![CDATA[
+        ORDER BY notice_bno DESC
+        LIMIT   #{pageStart}, #{perPageNum}
+    ]]>
+   </select>
+   
+   	<!-- 전체 공지사항 수 구하기 (Paging 처리) -->
+	<select id="noticeTotalCount" resultType="Integer">
+    <![CDATA[
+        SELECT	count(*)
+        FROM	notice_board
+        WHERE   1=1
+    ]]>
+       <include refid="noticeSearch"/>
+	</select>
+
+	<!-- 공지사항 상세페이지 -->
+	<select id="detailView" parameterType="int" resultType="com.room.admin.dto.BoardDTO">
+	SELECT notice_bno,
+		   notice_title,
+		   notice_content,
+		   notice_date
+	FROM   notice_board		   
+	WHERE  notice_bno = #{notice_bno}
+	</select>
+	
+	<select id="getBooks" resultType="com.room.main.dto.BookDTO" parameterType="String">
+		SELECT *
+		FROM book
+		WHERE m_name = #{m_name}
+	</select>
+	
+		<select id="bookView" resultType="com.room.main.dto.BookDTO">
+			SELECT 	book_order, m_name, m_bname, book_people, book_tel, book_ok,
+				start_date, end_date, ri.r_bno, b.r_bno, ri.r_kind, ri.r_name, rk.room_class,b.payment,b.r_price
+			FROM	book b join room_infra ri 
+			join room_kind rk 
+			on ri.r_kind = rk.room_bno 
+			on ri.r_bno = b.r_bno
+			WHERE	b.book_order = #{book_order};
+		</select>
+	
+	
+	<select id="belogin" resultType="com.room.main.dto.BookDTO" parameterType="String" >
+		SELECT *
+		FROM book
+		WHERE m_bname = #{m_bname}
+	</select>
+	     <!-- faq 검색조건 -->
+   	<sql id="faqsearch">
+      	<if test="searchType != null">
+	         <if test="searchType == 'faq_title'.toString()">AND faq_title LIKE CONCAT('%',#{keyword},'%')</if>
+	         <if test="searchType == 'faq_content'.toString()">AND faq_content LIKE CONCAT('%',#{keyword},'%')</if>
+      	</if>
+   	</sql>
+   	
+    <!-- Faq 수 구하기 (Paging 처리) + 검색조건 -->
+   	<select id="faqListTotalCount" parameterType="com.room.admin.dto.SearchCriteria" resultType="Integer">
+    	<![CDATA[
+        	SELECT   count(*) FROM faq
+        	WHERE   1=1
+     	]]>
+     	<include refid="faqsearch"/>
+   	</select>
+   
+   <!-- Faq 목록 보기 (Paging 처리) + 검색조건 -->
+   <select id="faqListPaging" parameterType="com.room.admin.dto.SearchCriteria" resultType="com.room.member.dto.FaqDTO">
+    	<![CDATA[
+        	SELECT   *  FROM   faq
+        	WHERE   1=1
+    	]]>
+      	<include refid="faqsearch"/>
+    	<![CDATA[
+        	ORDER BY faq_bno ASC
+        	LIMIT   #{pageStart}, #{perPageNum}
+    	]]>
+   	</select>
+   	
+   		     <!-- faq 검색조건 -->
+   	<sql id="reviewsearch">
+      	<if test="searchType != null">
+	         <if test="searchType == 'r_name'.toString()">AND r_name LIKE CONCAT('%',#{keyword},'%')</if>
+	         <if test="searchType == 'review_writer'.toString()">AND review_writer LIKE CONCAT('%',#{keyword},'%')</if>
+      	</if>
+   	</sql>
+   	
+    <!-- Faq 수 구하기 (Paging 처리) + 검색조건 -->
+   	<select id="reviewListTotalCount" parameterType="com.room.admin.dto.SearchCriteria" resultType="Integer">
+    	<![CDATA[
+        	SELECT   count(*) FROM review
+        	WHERE   1=1
+     	]]>
+     	<include refid="reviewsearch"/>
+   	</select>
+   
+   <!-- Faq 목록 보기 (Paging 처리) + 검색조건 -->
+   <select id="reviewListPaging" parameterType="com.room.admin.dto.SearchCriteria" resultType="com.room.member.dto.ReviewDTO">
+    	<![CDATA[
+        	SELECT   *  FROM   review
+        	WHERE   1=1
+    	]]>
+      	<include refid="reviewsearch"/>
+    	<![CDATA[
+        	ORDER BY r_bno ASC
+        	LIMIT   #{pageStart}, #{perPageNum}
+    	]]>
+   	</select>
+   	
+   	<!-- Qna 작성 -->
+   	<insert id="qnaInsert"  parameterType="com.room.member.dto.QnaDTO">
+   	Insert Into qna_board(qna_title, qna_content, qna_seceret, m_id)
+   	 	   Value (#{qna_title}, #{qna_content}, #{qna_seceret}, #{m_id})
+   	
+   	</insert>
+   	
+   		     <!-- qna 검색조건 -->
+   	<sql id="qnaSearch">
+      	<if test="searchType != null">
+	         <if test="searchType == 'qna_title'.toString()">AND qna_title LIKE CONCAT('%',#{keyword},'%')</if>
+	         <if test="searchType == 'qna_content'.toString()">AND qna_content LIKE CONCAT('%',#{keyword},'%')</if>
+      	</if>
+   	</sql>
+   	
+    <!-- qna 수 구하기 (Paging 처리) + 검색조건 -->
+   	<select id="qnaListTotalCount" parameterType="com.room.admin.dto.SearchCriteria" resultType="Integer">
+    	<![CDATA[
+        	SELECT   count(*) FROM qna_board
+        	WHERE   1=1
+     	]]>
+     	<include refid="qnaSearch"/>
+   	</select>
+   
+   <!-- qna 목록 보기 (Paging 처리) + 검색조건 -->
+   <select id="qnaListPaging" parameterType="com.room.admin.dto.SearchCriteria" resultType="com.room.member.dto.QnaDTO">
+    	<![CDATA[
+        	SELECT   *  FROM   qna_board
+        	WHERE   1=1
+    	]]>
+      	<include refid="qnaSearch"/>
+    	<![CDATA[
+        	ORDER BY qna_bno ASC
+        	LIMIT   #{pageStart}, #{perPageNum}
+    	]]>
+   	</select>
+
+   	
+   	<!-- qna 유저 아이디 체크 -->
+   	<select id="UserIdCheck" resultType="String">
+   	select m_id
+	from qna_board
+	where qna_bno = #{qna_bno}
+   	
+   	</select>
+   	
+   	<!-- qna 상세보기 -->
+   	<select id="qnaDetail" resultType="com.room.member.dto.QnaDTO">
+   	SELECT * FROM qna_board
+   	WHERE qna_bno = #{qna_bno}
+   	</select>
+   	
+   	<!-- qna 수정 -->
+   	<update id="qnaUpdate" parameterType="com.room.member.dto.QnaDTO" >
+   	UPDATE qna_board
+	SET	qna_title = #{qna_title},
+		qna_content = #{qna_content}
+	WHERE qna_bno = #{qna_bno}
+   	</update>
+   	
+   	<!-- qna 삭제 -->
+   	<delete id="qnaDelete" parameterType="com.room.member.dto.QnaDTO">
+    DELETE FROM qna_board
+	WHERE qna_bno = #{qna_bno} 
+   	</delete>
+
+   	   	<!-- 리뷰작성 조건 -->
+	<select id="checkReview" resultType="int">
+		select count(*) 
+		from review
+		where book_order=#{book_order}
+   	</select>
+   	<insert id="insertReview">
+   		insert into review(r_bno,r_name,m_id,r_kind,r_content,book_order,review_star)
+   		values(#{r_bno},#{r_name},#{m_id},#{r_kind},#{r_content},#{book_order},#{review_star})
+   	</insert>
+   	
+   	<!-- qna (댓글) 작성 -->
+   	<insert id ="registReply">
+     Insert Into qna_reply(rep_content, m_id, qna_bno, answer)
+   	  Value (#{rep_content},  #{m_id}, #{qna_bno}, 0 )
+   	</insert>
+
+	<!-- qna(댓글) 리스트 -->
+	<select id="replyList" resultType="com.room.member.dto.ReplyDTO">
+	select rep_bno, rep_content, m_id, rep_date, answer
+	from   qna_reply
+	where  qna_bno = #{qna_bno}
+	</select>
+	
+	<!-- qna(댓글) 삭제 -->
+	<delete id="deleteReply" parameterType="com.room.member.dto.ReplyDTO">
+	DELETE FROM qna_reply
+	WHERE rep_bno = #{rep_bno} 
+	</delete>
+	
+	<!-- qna(댓글) 수정 -->
+	<update id="modifyReply" parameterType="com.room.member.dto.ReplyDTO">
+   	UPDATE qna_reply
+	SET	rep_content = #{rep_content}
+	WHERE rep_bno = #{rep_bno}
+	</update>
+	<!-- 리뷰 수정 -->
+	<select id="getReview" resultType="com.room.member.dto.ReviewDTO">
+        select*
+        from review
+        where book_order=#{book_order}
+    </select>
+    <update id="updateReview">
+        update review
+        set r_content=#{r_content},
+            review_star=#{review_star}
+        where book_order=#{book_order}
+    </update>
+    <delete id="deleteReview" >
+    delete from review
+    where book_order=#{book_order}
+    </delete>
+    <delete id="deleteBook" >
+    delete from book
+    where book_order=#{book_order}
+    </delete>
+</mapper>

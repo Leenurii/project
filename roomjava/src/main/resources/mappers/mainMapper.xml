@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace = "com.room.main.mapper.mainMapper">
+
+	<!-- 방 종류 가져오기 room_kind-->
+	<select id="kind" resultType="com.room.admin.dto.RoomKindDTO"> 
+		SELECT 	room_bno, room_class
+		FROM 	room_kind
+
+	</select>
+
+	<!-- 방 리스트를 종류대로 뿌려주기 -->
+	<select id="allRooms" resultType="com.room.main.dto.RoomInfraDTO">
+		SELECT 	*
+		FROM 	room_infra
+		ORDER 	BY r_bno
+	</select>
+	
+	<!-- 방 소분류 종류대로 뿌려주기 -->
+	<select id="kindRooms" parameterType="String" resultType="com.room.main.dto.RoomInfraDTO">
+		SELECT 	*
+		FROM 	room_infra
+		WHERE 	r_kind = #{room_bno}
+		ORDER 	BY r_bno
+	</select>
+	
+	<select id="soKind" resultType="com.room.admin.dto.RoomKindDTO" parameterType="String">
+		SELECT *
+		FROM room_kind
+		WHERE room_bno = #{room_bno}
+	</select>
+
+	<!-- 방 상세보기 -->
+	<select id="roomView" parameterType="int" resultType="com.room.main.dto.RoomInfraDTO">
+		SELECT 	*
+		FROM 	room_infra
+		WHERE 	r_bno = #{r_bno}
+	</select>
+	
+	<!-- 방 기능 가져오기 room_fnc -->
+	<select id="getFnc" resultType="com.room.admin.dto.Room_fncDTO"> 
+		SELECT	fnc_bno, fnc_name, fnc_price
+		FROM 	room_fnc
+	</select>
+	
+	<!-- 방 렌트할 것 가져오기 room_rent -->
+	<select id="getRent" resultType="com.room.admin.dto.Room_rentDTO"> 
+		SELECT 	rent_bno, rent_name, rent_price
+		FROM 	room_rent
+	</select>	
+	
+	<!-- 방 렌트할 것 가져오기 room_rent -->
+	<select id="getPayment" resultType="com.room.admin.dto.PaymentDTO"> 
+		SELECT 	pay_bno, pay_name, pay_account, pay_bank
+		FROM 	payment
+	</select>	
+	     <!-- faq 검색조건 -->
+   	<sql id="faqsearch">
+      	<if test="searchType != null">
+	         <if test="searchType == 'faq_title'.toString()">AND title LIKE CONCAT('%',#{keyword},'%')</if>
+	         <if test="searchType == 'faq_content'.toString()">AND content LIKE CONCAT('%',#{keyword},'%')</if>
+      	</if>
+   	</sql>
+   	
+    <!-- Faq 수 구하기 (Paging 처리) + 검색조건 -->
+   	<select id="faqListTotalCount" parameterType="com.room.admin.dto.SearchCriteria" resultType="Integer">
+    	<![CDATA[
+        	SELECT   count(*) FROM faq
+        	WHERE   1=1
+     	]]>
+   	</select>
+   
+   <!-- Faq 목록 보기 (Paging 처리) + 검색조건 -->
+   <select id="faqListPaging" parameterType="com.room.admin.dto.SearchCriteria" resultType="com.room.member.dto.FaqDTO">
+    	<![CDATA[
+        	SELECT   *  FROM   faq
+        	WHERE   1=1
+    	]]>
+      	<include refid="faqsearch"/>
+    	<![CDATA[
+        	ORDER BY faq_bno ASC
+        	LIMIT   #{pageStart}, #{perPageNum}
+    	]]>
+   	</select>
+   	
+   	<!-- 방 예약하기 -->
+   	<insert id="insertBook">
+   		INSERT INTO book( book_order, m_name, book_people, book_tel, start_date, 
+   			end_date, r_bno, room_class, r_name, r_kind, r_rent, r_fnc ,payment,r_price)
+   		VALUES ( #{book_order}, #{m_name}, #{book_people}, #{book_tel}, 
+   			#{start_date}, #{end_date}, #{r_bno}, #{room_class}, #{r_name}, #{r_kind}, #{r_rent}, #{r_fnc} ,#{payment},#{r_price})
+   	</insert>
+   	
+   	<!-- DB에 예약정보 유무 -->
+   	<select id="manyBook" resultType="com.room.main.dto.BookDTO">
+   		SELECT *
+   		FROM book;
+   	</select>
+   	
+   	<!-- DB에 예약정보 유무 -->
+   	<select id="haveBookDay" resultType="int" parameterType="com.room.main.dto.BookDTO">
+   		SELECT COUNT(*)
+   		FROM book
+   		WHERE r_bno = #{r_bno}
+   		AND ( start_date = #{start_date} 
+   		OR start_date = #{end_date}
+   		OR end_date = #{end_date} )
+		
+   	</select>
+   	
+   	<!-- 비회원 예약하기 -->
+	<insert id="insertBmemBook">
+		INSERT INTO book( book_order, m_bname, m_name, book_people, book_tel, start_date, 
+   			end_date, r_bno, room_class, r_name, r_kind, r_rent, r_fnc )
+   		VALUES ( #{book_order}, #{m_bname}, #{m_name}, #{book_people}, #{book_tel}, 
+   			#{start_date}, #{end_date}, #{r_bno}, #{room_class}, #{r_name}, #{r_kind}, #{r_rent}, #{r_fnc} )
+	</insert>
+	   	
+</mapper>
