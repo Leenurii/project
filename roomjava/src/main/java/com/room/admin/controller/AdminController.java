@@ -37,6 +37,7 @@ import com.room.member.dto.MemberDTO;
 @RequestMapping("/admin")
 public class AdminController {
 	
+	
 	private static final Logger logger = LoggerFactory.getLogger(AdminController.class);
 	
     @Inject    //서비스를 호출하기 위해서 의존성을 주입
